@@ -7,8 +7,7 @@ description: Make product-launch / demo / explainer videos as code - an HTML pag
 
 Why this way: AI video models garble UI and text and cap length; PowerPoint animation must be done by hand.
 An HTML page with a time-driven `seek(t)` gives exact text, real fonts, real data, any length, and
-re-renders in minutes after a one-line change. Proven on the CLEAR and Haro launch videos
-(`Improvement Plan 2026/Product Launch/`, sources in `source/`).
+re-renders in minutes after a one-line change.
 
 ## Setup (once per working folder, use the scratchpad)
 ```bash
@@ -41,11 +40,11 @@ The pip ffmpeg is only needed when `ffmpeg` is not on PATH (render.js finds it i
   No CSS transitions, no `setTimeout`, no `Date.now()`; anything random must be seeded/fixed per element.
 - Live preview: start a `requestAnimationFrame` loop only when `!navigator.webdriver`, after `load`.
 - **Measure layout after load** (first `seek` call), never at script parse time: images not yet loaded measure as
-  0 height (chart bubbles collapsed in the first CLEAR/Haro pass).
+  0 height (image bubbles collapse).
 - Chat-style lists: column anchored at the bottom; each item's wrapper height animates 0 → measured height, so
   older items scroll up smoothly. Status bubbles ("still thinking…") collapse back to 0 when replaced.
 - Streaming text: wrap each word in a span at build time, reveal the first N. Typing: slice a string by t.
-- Word swaps in a lockup (e.g. "CLEAR Dashboard" → "Assistant" → "MCP"): letters roll out first, the next word
+- Word swaps in a lockup (e.g. "Acme Dashboard" → "Assistant" → "API"): letters roll out first, the next word
   starts ~0.4 s after the swap, and the box width eases from old to new width; re-centre the whole lockup from the
   measured widths every frame. Overlapping old/new words looked broken.
 - Camera: one wrapper `translate(x,y) scale(s)`; zooms interpolate between named camera states. For a zoom onto
@@ -54,8 +53,8 @@ The pip ffmpeg is only needed when `ffmpeg` is not on PATH (render.js finds it i
 
 ## Recreating product UI
 - A faithful HTML replica beats a screen recording for control: copy layout, labels, colours and font from the
-  real components (e.g. AskClearDrawer.vue step labels, `tokens.css` brand colours, the app's Google font).
-- Mock phones (WhatsApp) and terminals (Claude Code) are plain divs; mask secrets (`clr_pat_••••••••`).
+  real components (e.g. step labels from the UI components, brand colours from the design tokens, the app's web font).
+- Mock phones (chat apps) and terminals are plain divs; mask secrets (`tok_••••••••`).
 - Characters/mascots: redraw as inline SVG (parts you can move: eyes blink by scaleY, body roll/bounce) instead of
   animating a raster.
 
