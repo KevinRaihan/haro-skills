@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Launch video</title>
+<!-- Fonts: Google Fonts with display=block, or local @font-face; render.js waits for document.fonts.ready -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#fff}
+body{font-family:Inter,sans-serif;color:#111827}
+#stage{position:absolute;inset:0;overflow:hidden}
+.abs{position:absolute}
+#title{left:0;right:0;top:420px;text-align:center;font-size:120px;font-weight:800}
+#sub{left:0;right:0;top:600px;text-align:center;font-size:40px;color:#6B7280}
+#list{position:absolute;left:660px;right:660px;bottom:120px;display:flex;flex-direction:column}
+.wrap{overflow:hidden;display:flex;flex-direction:column}
+.item{margin-top:12px;padding:16px 22px;border-radius:14px;background:#F1F5F9;font-size:28px}
+</style></head>
+<body><div id="stage">
+  <div id="title" class="abs"></div>
+  <div id="sub" class="abs">Subtitle fades in</div>
+  <div id="list"></div>
+</div>
+<script>
+// ---- helpers: every animation is a pure function of t ----
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));            // 0 before a, 1 after b
+const lerp = (a, b, p) => a + (b - a) * p;
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeInOut = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const back = p => { const c = 1.6; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };   // overshoot pop
+const fade = (t, a, b, d = .4) => easeOut(seg(t, a, a + d)) * (1 - seg(t, b, b + d));                   // visible a..b
+
+// ---- content + timing (keep it in one place, or in a separate script.js) ----
+const DURATION = 8;
+const TITLE = "Hello, launch.";
+const ITEMS = [{ at: 4.0, text: "First item grows in" }, { at: 4.8, text: "Older items scroll up" }, { at: 5.6, text: "Like a chat" }];
+
+// ---- build once ----
+for (const it of ITEMS) {
+  const w = document.createElement("div"); w.className = "wrap";
+  w.innerHTML = `<div class="item">${it.text}</div>`; $("list").appendChild(w); it.el = w;
+}
+let measured = false;
+function measure() {           // first seek runs after load, so images and fonts have their real size
+  for (const it of ITEMS) { it.el.style.height = "auto"; it.h = it.el.offsetHeight; }
+  measured = true;
+}
+
+// ---- seek(t): set every element from t alone (no CSS transitions, no timers) ----
+function seek(t) {
+  if (!measured) measure();
+  const n = Math.round(seg(t, .3, 1.6) * TITLE.length);               // typing
+  $("title").textContent = TITLE.slice(0, n);
+  const s = fade(t, 1.8, 7.0, .5);
+  $("sub").style.opacity = s; $("sub").style.transform = `translateY(${lerp(20, 0, s)}px)`;
+  for (const it of ITEMS) {                                          // height grows -> smooth scroll of older items
+    const p = easeOut(seg(t, it.at, it.at + .3));
+    it.el.style.display = p > 0 ? "" : "none"; it.el.style.height = it.h * p + "px";
+    const a = back(seg(t, it.at, it.at + .4));
+    it.el.firstChild.style.opacity = clamp(a * 2); it.el.firstChild.style.transform = `scale(${lerp(.7, 1, a)})`;
+  }
+}
+window.seek = seek; window.DURATION = DURATION;
+// live preview when opened in a normal browser; render.js drives seek() itself
+window.addEventListener("load", () => {
+  if (!navigator.webdriver) { const t0 = performance.now(); (function loop() { seek(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); })(); }
+});
+</script>
+</body></html>
