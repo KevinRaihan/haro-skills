@@ -2,6 +2,7 @@
 
     venv/bin/python sheet.py stills/x 3 6 9.6 13.5 ...   -> stills/sheet.png (3 columns, time label on each)
 
+Works for any frame size (16:9, 9:16, 1:1, 4:5): cells follow the aspect of the first still.
 Needs pymupdf (venv/bin/pip install pymupdf).
 """
 import sys
@@ -9,7 +10,10 @@ import sys
 import pymupdf
 
 prefix, cols, times = sys.argv[1], int(sys.argv[2]), sys.argv[3:]
-W, H = 1920 // cols, 1080 // cols
+_pm = pymupdf.Pixmap(f"{prefix}-{times[0]}.png")
+fw, fh = _pm.width, _pm.height
+W = 1920 // cols
+H = round(W * fh / fw)
 rows = (len(times) + cols - 1) // cols
 page = pymupdf.open().new_page(width=cols * W, height=rows * H)
 for i, t in enumerate(times):
